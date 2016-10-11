@@ -1,4 +1,4 @@
-import json, os, math
+import json, os, math, sys
 
 
 def load_data(filepath):
@@ -9,32 +9,14 @@ def load_data(filepath):
 
 
 def get_biggest_bar(data):
-	max = 0
-	bars_name = {}
-	for bar in data:
-		dist = bar
-		if dist['Cells']['SeatsCount'] > max:
-			max = dist['Cells']['SeatsCount']
-
-	for bar in data:
-		dist = bar
-		if dist['Cells']['SeatsCount'] == max:
-			bars_name.update({dist['Cells']['Name']:max})
-	return bars_name
+	max_bar = max(data, key=lambda x: x['Cells']['SeatsCount'])
+	return max_bar
 
 
 def get_smallest_bar(data):
-	bars_name = {}
-	min = data[0]['Cells']['SeatsCount']
-	for bar in data:
-		dist = bar
-		if dist['Cells']['SeatsCount'] < min:
-			min = dist['Cells']['SeatsCount']
-	for bar in data:
-		dist = bar
-		if dist['Cells']['SeatsCount'] == min:
-			bars_name.update({dist['Cells']['Name']:min})
-	return bars_name
+	min_bar = min(data, key=lambda x: x['Cells']['SeatsCount'])
+
+	return min_bar
 
 
 def get_closest_bar(data, longitude, latitude):
@@ -53,10 +35,10 @@ def get_closest_bar(data, longitude, latitude):
 
 def calc_dist(x1,y1,x2,y2):
 
-	# pi - число pi, rad - радиус сферы (Земли)
+	# rad - радиус сферы (Земли)
 	rad = 6372795
 
-	# координаты двух точек (исходное местоположение)
+	# исходное местоположение
 	llat1 = x1
 	llong1 = y1
 
@@ -83,18 +65,29 @@ def calc_dist(x1,y1,x2,y2):
 	y = math.sqrt(math.pow(cl2 * sdelta, 2) + math.pow(cl1 * sl2 - sl1 * cl2 * cdelta, 2))
 	x = sl1 * sl2 + cl1 * cl2 * cdelta
 	ad = math.atan2(y, x)
-	dist = ad * rad
-	#print (dist)
-	return dist
+	distance = ad * rad
+	return distance
 
 
 if __name__ == '__main__':
-	bars = load_data('bars.json')
-	big_bars = get_biggest_bar(bars)
-	small_bars = get_smallest_bar(bars)
+	if len(sys.argv) > 1:
+		filepath = sys.argv[1]
+	else:
+		print("Отсутствует путь к файлу. Смотрите инструкцию по запуску программы в README.md")
+		exit();
+	bars = load_data(filepath)
+	if bars is None:
+		print("Неверный путь к файлу")
+		exit();
+
 	p1 = float(input("Введите первую координату\n"))
 	p2 = float(input("Введите вторую координату\n"))
+	big_bars = get_biggest_bar(bars)
+	format_big_bars = 'Самый большой бар - {0}. Вместимость - {1}'.format(big_bars['Cells']['Name'], big_bars['Cells']['SeatsCount'])
+	print(format_big_bars)
+	small_bars = get_smallest_bar(bars)
+	format_small_bars = 'Самый маленький бар - {0}. Вместимость - {1}'.format(small_bars['Cells']['Name'], small_bars['Cells']['SeatsCount'])
+	print(format_small_bars)
 	closest_bar = get_closest_bar(bars, p1, p2)
-	print ("Самый большой бар - ",big_bars, "\n","Самый маленький бар - ", small_bars)
-	print ("Самый близкий бар - ",closest_bar)
+	print("Самый близкий бар - ", closest_bar)
 	pass
